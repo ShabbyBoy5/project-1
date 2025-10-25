@@ -1,0 +1,21 @@
+# Virtual Environment
+myvenv/
+.venv/
+env/
+
+# Python cache
+*.pyc
+__pycache__/
+
+# OS-specific
+.DS_Store
+
+# Generated files & outputs
+artifacts/
+outputs/     # <-- FIX: Made this plural to match your folder
+data/
+
+# Datasets (You almost certainly want to ignore these)
+ecg5000/
+mit-bih-arrhythmia-database-1.0.0/
+mitbih_features.csv
