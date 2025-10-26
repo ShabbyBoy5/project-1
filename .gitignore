@@ -1,4 +1,3 @@
-# Virtual Environment
 myvenv/
 .venv/
 env/
@@ -12,10 +11,10 @@ __pycache__/
 
 # Generated files & outputs
 artifacts/
-outputs/     # <-- FIX: Made this plural to match your folder
+outputs/     
 data/
 
-# Datasets (You almost certainly want to ignore these)
+# Datasets
 ecg5000/
 mit-bih-arrhythmia-database-1.0.0/
 mitbih_features.csv
