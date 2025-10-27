@@ -12,7 +12,9 @@ Install dependencies:
 
 ```
 pip install -r requirements_ecg.txt
-Quickstart (one command)
+```
+
+## Quickstart (end-to-end)
 
 If you have uv installed, you can run the entire pipeline end-to-end with sane defaults:
 
@@ -42,6 +44,58 @@ Dataset (UCR ECG5000):
 - Place both files in the `data/` directory:
   - `data/ECG5000_TRAIN.txt`
   - `data/ECG5000_TEST.txt`
+
+## Architecture
+
+```mermaid
+flowchart TB
+  subgraph Data
+    D[ECG5000_TRAIN.txt + ECG5000_TEST.txt]
+  end
+
+  subgraph Features
+    FE[run_ecg5000_pipeline.py] --> FCSV[artifacts/ecg5000/features.csv]
+  end
+
+  subgraph Causality
+    PCMCI[run_causality.py — PCMCI+] -->|pcmci_edges.json| PCMCIo
+    VAR[run_causality.py — VAR-LASSO] -->|granger_edges.json| VARo
+    PCMCIo[(artifacts/causality_ecg5000/pcmci_edges.json)]
+    VARo[(artifacts/causality_ecg5000/granger_edges.json)]
+    PCMCIo --> FUSE[fuse_union / fuse_intersection]
+    VARo --> FUSE
+    FUSE --> FUSED[(artifacts/causality_ecg5000/graph_fused.json)]
+  end
+
+  subgraph SCM
+    FIT[run_scm_fit.py] --> SCMJSON[(artifacts/scm/ecg5000_linear_lagged.json)]
+  end
+
+  subgraph Anomaly
+    ANOM[run_anomaly.py] --> ANOMCSV[(artifacts/anomaly_ecg5000/features_with_<model>.csv)]
+    ANOM --> AMET[(artifacts/anomaly_ecg5000/metrics_<model>.json)]
+  end
+
+  subgraph Counterfactuals
+    CF[run_counterfactuals.py] --> CFJSON[(artifacts/counterfactuals_ecg5000/cf_results_<model>.json)]
+    CF --> CFSMRY[(.../cf_results_<model>.summary.json)]
+  end
+
+  subgraph Diagnostics
+    SCM_EVAL[evaluate_scm_forecast.py] --> SCMREP[(artifacts/scm/eval_report_reg.json)]
+    CF_EVAL[evaluate_cfs.py] --> CFSMRY
+  end
+
+  D --> FE
+  FCSV --> PCMCI
+  FCSV --> VAR
+  FUSED --> FIT
+  FCSV --> ANOM
+  SCMJSON --> CF
+  ANOMCSV --> CF
+  FCSV --> SCM_EVAL
+  FUSED --> SCM_EVAL
+```
 
 ## 1) Extract ECG5000 features
 
