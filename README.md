@@ -44,6 +44,7 @@ Dataset (UCR ECG5000):
 - Place both files in the `data/` directory:
   - `data/ECG5000_TRAIN.txt`
   - `data/ECG5000_TEST.txt`
+```
 
 ## Architecture
 
