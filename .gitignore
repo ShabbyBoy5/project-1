@@ -11,8 +11,8 @@ __pycache__/
 
 # Generated files & outputs
 artifacts/
-outputs/     
-data/
+outputs/
+dataset/
 
 # Datasets
 ecg5000/

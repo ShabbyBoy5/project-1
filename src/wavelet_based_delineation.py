@@ -133,6 +133,43 @@ def wavelet_delineate_beat(beat: np.ndarray, fs=FS, pre_ms=200, post_ms=400) -> 
         "T_idx": T_idx
     }
 
+
+def wavelet_delineate_beat_unaligned(beat: np.ndarray, fs=FS) -> Dict[str, float]:
+    """
+    Wavelet delineation for a single beat segment without assuming the R wave is centered.
+    Automatically estimates R index from the filtered signal and then reuses the logic
+    from wavelet_delineate_beat by setting pre/post around the detected R.
+
+    Note: Without absolute time calibration, returned intervals (PR/QRS/QT) are in seconds
+    under the assumed fs.
+    """
+    xb = bandpass(beat, fs=fs, low=0.5, high=40.0, order=4)
+    # Detect R index as the most prominent peak
+    peaks, props = signal.find_peaks(xb, prominence=np.std(xb) * 0.5)
+    if len(peaks) == 0:
+        R_idx = int(np.argmax(np.abs(xb)))
+    else:
+        prom = props.get("prominences", np.zeros(len(peaks)))
+        R_idx = int(peaks[int(np.argmax(prom))])
+
+    # Define window around R to emulate centered-beat delineation
+    pre_ms = 200
+    post_ms = 400
+    pre = int(round(pre_ms * 1e-3 * fs))
+    post = int(round(post_ms * 1e-3 * fs))
+    start = max(0, R_idx - pre)
+    end = min(len(xb), R_idx + post)
+    win = xb[start:end]
+    # If window too small, pad
+    if len(win) < (pre + post):
+        pad_left = pre - min(pre, R_idx - start)
+        pad_right = pre + post - len(win) - pad_left
+        win = np.pad(win, (pad_left, max(0, pad_right)), mode='edge')
+
+    # Now call the centered delineation on the window
+    d = wavelet_delineate_beat(win, fs=fs, pre_ms=pre_ms, post_ms=post_ms)
+    return d
+
 def qtc_bazett(qt_sec: float, rr_samples: float, fs=FS) -> float:
     if qt_sec is None or np.isnan(qt_sec) or rr_samples is None or np.isnan(rr_samples) or rr_samples <= 0:
         return np.nan
